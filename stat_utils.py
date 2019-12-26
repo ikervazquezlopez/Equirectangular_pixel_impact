@@ -16,12 +16,52 @@ def replace_mean_element_list(mean, n, removed_els, added_els):
 def compute_variance(img):
     img = img.astype(np.int32)
     n = img.shape[0] * img.shape[1]
-    print(img.dtype, [...])
     mean = np.mean(img)
     xi = np.sum(img)
     xi_2 = np.sum(img*img)
     var = xi_2/n - 2*mean*xi/n + mean*mean
     return var, xi, xi_2
+
+def recompute_variance(mean, xi, xi_2, n, removed_els, added_els):
+    mean = replace_mean_element_list(mean, n, removed_els, added_els)
+    for el in removed_els:
+        xi_2 -= el*el
+        xi -= el
+    for el in added_els:
+        xi_2 += el*el
+        xi += el
+    var = xi_2/n - 2*mean*xi/n + mean*mean
+    return var, xi, xi_2
+
+def compute_covariance(img0, img1):
+    imgx = img0.astype(np.int32)
+    imgy = img1.astype(np.int32)
+    n = img.shape[0] * img.shape[1]
+    if n != img1.shape[0]*img.shape[1]:
+        print("ERROR: image shapes are different!")
+        print(img0.shape)
+        print(img1.shape)
+        exit(-1)
+    mean_x = np.mean(imgx)
+    mean_y = np.mean(imgy)
+    xi = np.sum(imgx)
+    yi = np.sum(imgy)
+    xiyi = np.sum(imgx*imgy)
+    cov = (mean_x*mean_y/n) * (xiyi - mean_y*xi - mean_x*yi)
+    return cov, mean_x, mean_y, xi, yi, xiyi
+
+def recompute_covariance(cov, mean_x, mean_y, xi, yi, xiyi, n, removed_els, added_els, mirror_els_y):
+    mean_x = replace_mean_element_list(mean_x, n, removed_els, added_els)
+    for el, mel in zip(removed_els, mirror_els_y):
+        xi -= el
+        xiyi -= el*mel
+    for el, mel in zip(added_els, mirror_els_y):
+        xi += el
+        xiyi += el*mel
+    cov = (mean_x*mean_y/n) * (xiyi - mean_y*xi - mean_x*yi)
+    return cov, mean_x, mean_y, xi, yi, xiyi
+
+
 
 """
 def replace_variance_element(variance, mean, n, _xi_2, removed_el, added_el):
